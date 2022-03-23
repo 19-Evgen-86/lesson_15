@@ -13,18 +13,18 @@ def set_db_data(db_name, sql):
 
 
 def create_table_shelter_db():
-    sql_animals = """ create table `animals` (
+    sql_animals = """ CREATE TABLE IF NOT EXISTS `animals` (
                 `id` varchar(30) UNIQUE,
                 `name` NVARCHAR(50),
                 `animal_type` NVARCHAR(30),
                 `breed` NVARCHAR(30),
-                `date_of_birth` DATE,
+                `date_of_birth` NVARCHAR(40),
                 `color_1` NVARCHAR(10),
                 `color_2` NVARCHAR(10)  
              )"""
     set_db_data("shelter.db", sql_animals)
 
-    sql_shelter = """ create table `shelter` (
+    sql_shelter = """ CREATE TABLE IF NOT EXISTS `shelter` (
                     `id` integer PRIMARY KEY AUTOINCREMENT,
                     `animal_id` VARCHAR(30) UNIQUE,
                     `outcome_subtype` NVARCHAR(30),
@@ -44,15 +44,16 @@ def copy_animals_db_to_shelter_db():
                                                   `outcome_year`,`age_upon_outcome`
                                                   from animals""").fetchall()
 
-        animals_data_to_animals = animals.execute("""select animal_id,name,animal_type,breed,"
-                        "date_of_birth,color1,color2 from animals""").fetchall()
+        animals_data_to_animals = animals.execute("""select `animal_id`,`name`,`animal_type`,`breed`,
+                        `date_of_birth`,`color1`,`color2` from animals""").fetchall()
 
+        shelter.executemany("""insert or ignore into shelter(`animal_id`,`outcome_subtype`,`outcome_type`,`outcome_month`,
+                        `outcome_year`,`age_upon_outcome`) values (?,?,?,?,?,?)""", animals_data_to_shelter)
+        shelter.executemany("""insert or ignore into animals( `id`,`name`,`animal_type`,`breed`,
+                            `date_of_birth`,`color_1`,`color_2`) values (?,?,?,?,?,?,?)""", animals_data_to_animals)
 
-        shelter.executemany("insert or ignore into shelter(animal_id,outcome_subtype,outcome_type,outcome_month,"
-                        "outcome_year,age_upon_outcome) values (?,?,?,?,?,?)", animals_data_to_shelter)
-        shelter.executemany("insert or ignore into animals("
-                        "date_of_birth) values (?)", animals_data_to_animals)
 
 if __name__ == '__main__':
-    for item in(get_db_data("shelter.db", "select * from animals limit 10")):
-        print(list(item))
+
+    create_table_shelter_db()
+    copy_animals_db_to_shelter_db()
