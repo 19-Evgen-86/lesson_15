@@ -66,5 +66,3 @@ def get_animal_by_id(id: int):
         return f"нет данных по ID = {id}"
 
 
-if __name__ == '__main__':
-    print(get_animal_by_id(30000))
