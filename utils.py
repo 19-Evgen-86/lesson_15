@@ -14,7 +14,7 @@ def set_db_data(db_name, sql):
 
 def create_table_shelter_db():
     sql_animals = """ CREATE TABLE IF NOT EXISTS `animals` (
-                `id` varchar(30) UNIQUE,
+                `id` varchar(30) PRIMARY KEY,
                 `name` NVARCHAR(50),
                 `animal_type` NVARCHAR(30),
                 `breed` NVARCHAR(30),
