@@ -13,49 +13,110 @@ def set_db_data(db_name, sql):
 
 
 def create_table_shelter_db():
-    sql_animals = """ CREATE TABLE IF NOT EXISTS `animals` (
+    sql_animals_breed = """ CREATE TABLE  `animals_breed` (
+                        `id` INTEGER  PRIMARY KEY AUTOINCREMENT,
+                        `breed` NVARCHAR(30)             
+                     )"""
+
+    set_db_data("shelter.db", sql_animals_breed)
+
+    ql_animals_type = """ CREATE TABLE  `animals_type` (
+                            `id` INTEGER  PRIMARY KEY AUTOINCREMENT,
+                            `animal_type` NVARCHAR(30)                
+                         )"""
+    set_db_data("shelter.db", ql_animals_type)
+
+    sql_animals = """ CREATE TABLE  `animals` (
                 `id` varchar(30) PRIMARY KEY,
                 `name` NVARCHAR(50),
-                `animal_type` NVARCHAR(30),
-                `breed` NVARCHAR(30),
+                `animal_type_id` INTEGER,
+                `breed_id` INTEGER,
                 `date_of_birth` NVARCHAR(40),
-                `color_1` NVARCHAR(10),
-                `color_2` NVARCHAR(10)  
+                `color_1` NVARCHAR(10) DEFAULT NULL,
+                `color_2` NVARCHAR(10) DEFAULT NULL,
+                 FOREIGN KEY (breed_id) REFERENCES animals_breed(id),
+                 FOREIGN KEY (animal_type_id) REFERENCES animals_type(id)
              )"""
     set_db_data("shelter.db", sql_animals)
 
-    sql_shelter = """ CREATE TABLE IF NOT EXISTS `shelter` (
+    sql_animals_programs = """ CREATE TABLE  `animals_programs` (
+                        `id` integer PRIMARY KEY AUTOINCREMENT,
+                        `animal_program` NVARCHAR(30)                   
+                     )"""
+    set_db_data("shelter.db", sql_animals_programs)
+
+    sql_animals_status = """ CREATE TABLE  `animals_status` (
+                           `id` integer PRIMARY KEY AUTOINCREMENT,
+                           `animal_status` NVARCHAR(30)                   
+                        )"""
+    set_db_data("shelter.db", sql_animals_status)
+
+    sql_shelter = """ CREATE TABLE `shelter` (
                     `id` integer PRIMARY KEY AUTOINCREMENT,
-                    `animal_id` VARCHAR(30) UNIQUE,
-                    `outcome_subtype` NVARCHAR(30),
-                    `outcome_type` NVARCHAR(30),
+                    `animal_id` VARCHAR(30),
+                    `outcome_subtype` INTEGER ,
+                    `outcome_type` INTEGER,
                     `outcome_month` INTEGER,
                     `outcome_year` INTEGER,
-                    `age_upon_outcome` NVARCHAR(10),
-
+                    `age_upon_outcome` INTEGER,
+                    FOREIGN KEY (outcome_subtype) REFERENCES animals_programs(id),
+                    FOREIGN KEY (outcome_type) REFERENCES sql_animals_status(id),
                     FOREIGN KEY (animal_id) REFERENCES animals(id)
                  )"""
     set_db_data("shelter.db", sql_shelter)
 
 
-def copy_animals_db_to_shelter_db():
-    with sqlite3.connect("animal.db") as animals, sqlite3.connect("shelter.db") as shelter:
-        animals_data_to_shelter = animals.execute("""select `animal_id`,`outcome_subtype`,`outcome_type`,`outcome_month`,
-                                                  `outcome_year`,`age_upon_outcome`
-                                                  from animals""").fetchall()
+def copy_animals_breed():
+    with sqlite3.connect("animal.db") as animals:
+        animals_breed = animals.execute("select distinct breed from animals")
 
-        animals_data_to_animals = animals.execute("""select `animal_id`,`name`,`animal_type`,`breed`,
-                        `date_of_birth`,`color1`,`color2` from animals""").fetchall()
+    with sqlite3.connect("shelter.db") as shelter:
+        shelter.executemany(" insert into animals_breed (breed) values (?)", animals_breed)
 
-        shelter.executemany("""insert or ignore into shelter(`animal_id`,`outcome_subtype`,`outcome_type`,`outcome_month`,
-                        `outcome_year`,`age_upon_outcome`) values (?,?,?,?,?,?)""", animals_data_to_shelter)
-        shelter.executemany("""insert or ignore into animals( `id`,`name`,`animal_type`,`breed`,
-                            `date_of_birth`,`color_1`,`color_2`) values (?,?,?,?,?,?,?)""", animals_data_to_animals)
 
+def copy_animals_status():
+    with sqlite3.connect("animal.db") as animals:
+        animals_status = animals.execute("select distinct outcome_type from animals")
+
+    with sqlite3.connect("shelter.db") as shelter:
+        shelter.executemany(" insert into animals_status (animal_status) values (?)", animals_status)
+
+
+def copy_animals_programs():
+    with sqlite3.connect("animal.db") as animals:
+        animals_programs = animals.execute("select distinct outcome_subtype from animals")
+
+    with sqlite3.connect("shelter.db") as shelter:
+        shelter.executemany(" insert into animals_programs (animal_program) values (?)", animals_programs)
+
+
+def copy_animals_type():
+    with sqlite3.connect("animal.db") as animals:
+        animals_type = animals.execute("select distinct animal_type from animals")
+
+    with sqlite3.connect("shelter.db") as shelter:
+        shelter.executemany(" insert into animals_type (animal_type) values (?)", animals_type)
+
+
+def insert_to_animals():
+    sql_query = "insert into animals (id,name,animal_type_id,breed_id,date_of_birth,color_1,color_2) " \
+                "values ('A686497','Chester',1,2,2014-03-22,'black','white')," \
+                "('A617061','Pumpkin',1,4,2011-08-02,'black','')"
+    set_db_data("shelter.db", sql_query)
+
+def insert_to_shelter():
+    sql_query = "insert into shelter (animal_id,outcome_subtype,outcome_type,outcome_month,outcome_year,age_upon_outcome) " \
+                "values ('A686497',3,5,4,2015,'3 months')," \
+                "('A617061',5,7,8,2017,'6 months')"
+    set_db_data("shelter.db", sql_query)
 
 def get_animal_by_id(id: int):
-    sql_query = f"SELECT `name`,`animal_type`,`breed`,`outcome_subtype`,`outcome_year`,`age_upon_outcome` " \
+    sql_query = f"SELECT `name`,`animal_type`,`breed`,`animal_program`,`animal_status` " \
                 f"FROM `animals` LEFT JOIN `shelter` ON shelter.animal_id = animals.id " \
+                f"LEFT JOIN animals_type ON animals.animal_type_id = animals_type.id " \
+                f"LEFT JOIN animals_status ON shelter.outcome_type = animals_status.id " \
+                f"LEFT JOIN animals_programs ON shelter.outcome_subtype = animals_programs.id " \
+                f"LEFT JOIN animals_breed ON animals.breed_id = animals_breed.id " \
                 f"WHERE shelter.id = '{id}'"
 
     result = get_db_data("shelter.db", sql_query)
@@ -63,6 +124,5 @@ def get_animal_by_id(id: int):
         for item in result:
             return dict(item)
     else:
-        return f"нет данных по ID = {id}"
-
+        return {"error": f" NOT FOUND ID = {id}"}
 
