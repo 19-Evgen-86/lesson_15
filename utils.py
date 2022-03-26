@@ -26,16 +26,23 @@ def create_table_shelter_db():
                          )"""
     set_db_data("shelter.db", ql_animals_type)
 
+    sql_animals_color = """ CREATE TABLE  `animals_color` (
+                                `id` INTEGER  PRIMARY KEY AUTOINCREMENT,
+                                `color_1` NVARCHAR(30),
+                                `color_2` NVARCHAR(30)                
+                             )"""
+    set_db_data("shelter.db", sql_animals_color)
+
     sql_animals = """ CREATE TABLE  `animals` (
                 `id` varchar(30) PRIMARY KEY,
                 `name` NVARCHAR(50),
                 `animal_type_id` INTEGER,
                 `breed_id` INTEGER,
                 `date_of_birth` NVARCHAR(40),
-                `color_1` NVARCHAR(10) DEFAULT NULL,
-                `color_2` NVARCHAR(10) DEFAULT NULL,
+                `color_id` INTEGER, 
                  FOREIGN KEY (breed_id) REFERENCES animals_breed(id),
-                 FOREIGN KEY (animal_type_id) REFERENCES animals_type(id)
+                 FOREIGN KEY (animal_type_id) REFERENCES animals_type(id),
+                 FOREIGN KEY (color_id) REFERENCES animals_color(id)
              )"""
     set_db_data("shelter.db", sql_animals)
 
@@ -97,18 +104,26 @@ def copy_animals_type():
     with sqlite3.connect("shelter.db") as shelter:
         shelter.executemany(" insert into animals_type (animal_type) values (?)", animals_type)
 
+def copy_animals_color():
+    with sqlite3.connect("animal.db") as animals:
+        animals_color = animals.execute("select distinct `color1`,`color2` from animals")
+
+    with sqlite3.connect("shelter.db") as shelter:
+        shelter.executemany(" insert into animals_color (color_1,color_2) values (?,?)", animals_color)
 
 def insert_to_animals():
-    sql_query = "insert into animals (id,name,animal_type_id,breed_id,date_of_birth,color_1,color_2) " \
-                "values ('A686497','Chester',1,2,2014-03-22,'black','white')," \
-                "('A617061','Pumpkin',1,4,2011-08-02,'black','')"
+    sql_query = "insert into animals (id,name,animal_type_id,breed_id,date_of_birth,color_id) " \
+                "values ('A686497','Chester',1,2,2014-03-22,1)," \
+                "('A617061','Pumpkin',1,4,2011-08-02,6)"
     set_db_data("shelter.db", sql_query)
+
 
 def insert_to_shelter():
     sql_query = "insert into shelter (animal_id,outcome_subtype,outcome_type,outcome_month,outcome_year,age_upon_outcome) " \
                 "values ('A686497',3,5,4,2015,'3 months')," \
                 "('A617061',5,7,8,2017,'6 months')"
     set_db_data("shelter.db", sql_query)
+
 
 def get_animal_by_id(id: int):
     sql_query = f"SELECT `name`,`animal_type`,`breed`,`animal_program`,`animal_status` " \
