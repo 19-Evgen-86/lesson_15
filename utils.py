@@ -113,8 +113,8 @@ def copy_animals_color():
 
 def insert_to_animals():
     sql_query = "insert into animals (id,name,animal_type_id,breed_id,date_of_birth,color_id) " \
-                "values ('A686497','Chester',1,2,2014-03-22,1)," \
-                "('A617061','Pumpkin',1,4,2011-08-02,6)"
+                "values ('A686497','Chester',1,2,date('2014-03-22'),1)," \
+                "('A617061','Pumpkin',1,4,date('2011-08-02'),6)"
     set_db_data("shelter.db", sql_query)
 
 
