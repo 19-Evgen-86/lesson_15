@@ -38,7 +38,7 @@ def create_table_shelter_db():
                 `name` NVARCHAR(50),
                 `animal_type_id` INTEGER,
                 `breed_id` INTEGER,
-                `date_of_birth` NVARCHAR(40),
+                `date_of_birth` date,
                 `color_id` INTEGER, 
                  FOREIGN KEY (breed_id) REFERENCES animals_breed(id),
                  FOREIGN KEY (animal_type_id) REFERENCES animals_type(id),
